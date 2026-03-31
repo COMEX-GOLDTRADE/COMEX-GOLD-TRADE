@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COMEX GOLD — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#090910;--bg2:#0f0f1a;--sidebar:#0c0c17;
+  --card:#111120;--card2:#181828;
+  --gold:#d4af37;--gold2:#f0c040;--gold3:rgba(212,175,55,.12);
+  --gold-border:rgba(212,175,55,.2);
+  --text:#f0ead8;--text2:rgba(240,234,216,.65);--sub:rgba(240,234,216,.32);
+  --border:rgba(255,255,255,.06);
+  --up:#2ecc71;--dn:#ff4757;--blue:#4a9eff;--purple:#9b59b6;--orange:#f39c12;
+  --sidebar-w:230px;--radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);display:flex;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(212,175,55,.25);border-radius:10px;}
+
+/* ===== FIREBASE WARNING BANNER ===== */
+#fbWarning{
+  position:fixed;top:0;left:0;right:0;z-index:99999;
+  background:linear-gradient(90deg,#2a1a00,#3a2600,#2a1a00);
+  border-bottom:1px solid rgba(243,156,18,.4);
+  padding:10px 20px;display:none;align-items:center;gap:12px;
+}
+#fbWarning p{font-size:12px;color:#f39c12;line-height:1.6;flex:1;}
+#fbWarning b{color:#f0c040;}
+.fw-close{background:none;border:1px solid rgba(243,156,18,.3);color:#f39c12;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;white-space:nowrap;}
+
+/* ===== LOGIN ===== */
+#loginScreen{
+  position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  background-image:
+    radial-gradient(ellipse 60% 50% at 50% 0%,rgba(212,175,55,.07) 0%,transparent 70%),
+    repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(212,175,55,.02) 60px,rgba(212,175,55,.02) 61px),
+    repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(212,175,55,.02) 60px,rgba(212,175,55,.02) 61px);
+}
+.login-box{
+  width:100%;max-width:380px;background:var(--card);
+  border:1px solid var(--gold-border);border-radius:24px;padding:36px 30px;
+  position:relative;overflow:hidden;
+}
+.login-box::before{
+  content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);
+  width:300px;height:200px;
+  background:radial-gradient(ellipse,rgba(212,175,55,.1) 0%,transparent 70%);pointer-events:none;
+}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .crown{font-size:36px;margin-bottom:10px;display:block;}
+.login-logo h1{font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:var(--gold2);letter-spacing:.12em;}
+.login-logo p{font-size:10px;color:var(--sub);letter-spacing:.18em;text-transform:uppercase;margin-top:3px;}
+.admin-badge{display:inline-block;margin-top:10px;padding:3px 12px;background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.3);border-radius:20px;font-size:10px;color:#ff6b78;font-weight:700;letter-spacing:.1em;}
+.l-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:6px;display:block;}
+.l-input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:11px;padding:12px 14px;font-size:14px;font-weight:500;color:var(--text);font-family:'Syne',sans-serif;transition:border-color .25s,background .25s;outline:none;}
+.l-input:focus{border-color:var(--gold);background:rgba(212,175,55,.04);}
+.l-input::placeholder{color:var(--sub);}
+.l-group{margin-bottom:14px;}
+.btn-login{width:100%;padding:13px;margin-top:4px;background:linear-gradient(135deg,#c9982e,var(--gold2));color:#000;font-weight:800;font-size:14px;font-family:'Syne',sans-serif;border:none;border-radius:12px;cursor:pointer;letter-spacing:.06em;transition:opacity .2s,transform .15s,box-shadow .25s;box-shadow:0 4px 20px rgba(212,175,55,.25);}
+.btn-login:hover{box-shadow:0 6px 28px rgba(212,175,55,.4);}
+.btn-login:active{opacity:.85;transform:scale(.98);}
+.l-err{font-size:12px;color:#ff4757;min-height:18px;margin-top:8px;text-align:center;}
+.l-hint{font-size:11px;color:var(--sub);text-align:center;margin-top:10px;line-height:1.6;}
+.l-hint b{color:var(--gold2);}
+
+/* ===== ADMIN APP ===== */
+#adminApp{display:flex;width:100%;height:100dvh;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;background:var(--sidebar);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative;
+}
+.sidebar::after{
+  content:'';position:absolute;top:0;right:0;width:1px;height:100%;
+  background:linear-gradient(to bottom,transparent,rgba(212,175,55,.3) 30%,rgba(212,175,55,.3) 70%,transparent);pointer-events:none;
+}
+.sb-logo{padding:22px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-logo .crown2{font-size:22px;}
+.sb-logo h2{font-family:'Cinzel',serif;font-size:13px;font-weight:900;color:var(--gold2);letter-spacing:.08em;}
+.sb-logo p{font-size:9px;color:var(--sub);letter-spacing:.12em;text-transform:uppercase;margin-top:1px;}
+.sb-nav{flex:1;overflow-y:auto;padding:10px 10px;}
+.sb-section-label{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--sub);padding:10px 10px 5px;margin-top:4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:all .2s;color:var(--text2);font-size:12.5px;font-weight:600;margin-bottom:2px;position:relative;}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text);}
+.nav-item.active{background:rgba(212,175,55,.1);color:var(--gold2);}
+.nav-item.active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:3px;border-radius:0 3px 3px 0;background:var(--gold2);}
+.nav-ico{font-size:15px;width:20px;text-align:center;}
+.nav-badge{margin-left:auto;background:#ff4757;color:#fff;font-size:9px;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+.nav-badge.gold-b{background:var(--gold);color:#000;}
+.nav-badge.green-b{background:var(--up);color:#000;}
+.sb-bottom{border-top:1px solid var(--border);padding:12px 10px;}
+.admin-info{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);margin-bottom:8px;}
+.admin-av{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#000;flex-shrink:0;}
+.admin-info-name{font-size:12px;font-weight:700;color:var(--text);}
+.admin-info-email{font-size:10px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;}
+.logout-btn{width:100%;padding:8px;background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);border-radius:9px;color:#ff6b78;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:all .2s;letter-spacing:.04em;}
+.logout-btn:hover{background:rgba(255,71,87,.15);}
+
+/* MAIN */
+.main-content{flex:1;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);}
+.top-bar{height:56px;flex-shrink:0;padding:0 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);}
+.page-title{font-size:16px;font-weight:800;color:var(--text);}
+.page-sub{font-size:10px;color:var(--sub);margin-top:1px;font-family:'JetBrains Mono';}
+.tb-right{display:flex;align-items:center;gap:10px;}
+.tb-live{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:8px;background:var(--gold3);border:1px solid var(--gold-border);font-size:11px;font-weight:700;color:var(--gold2);font-family:'JetBrains Mono';}
+.tb-dot{width:6px;height:6px;border-radius:50%;background:var(--up);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.content-area{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 24px;}
+
+/* PAGES */
+.pg{display:none;animation:pgIn .3s ease;}
+.pg.active{display:block;}
+@keyframes pgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden;transition:border-color .2s;}
+.stat-card:hover{border-color:rgba(212,175,55,.2);}
+.stat-card::before{content:'';position:absolute;top:-30px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--glow,rgba(212,175,55,.08)) 0%,transparent 70%);}
+.stat-ico{font-size:20px;margin-bottom:8px;display:block;}
+.stat-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);margin-bottom:4px;}
+.stat-val{font-size:26px;font-weight:800;letter-spacing:-.5px;font-family:'JetBrains Mono';color:var(--text);}
+.stat-val.gold{color:var(--gold2);}
+.stat-val.green{color:var(--up);}
+.stat-val.red{color:var(--dn);}
+.stat-val.orange{color:var(--orange);}
+.stat-sub{font-size:10px;color:var(--sub);margin-top:4px;}
+
+/* TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
+.table-toolbar{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.tb-title{font-size:13px;font-weight:700;color:var(--text);}
+.search-box{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:7px 11px;min-width:160px;max-width:240px;}
+.search-box input{flex:1;background:none;border:none;outline:none;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;}
+.search-box input::placeholder{color:var(--sub);}
+.filter-btn{padding:7px 12px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid var(--border);background:var(--card2);color:var(--text2);cursor:pointer;transition:all .2s;font-family:'Syne',sans-serif;white-space:nowrap;}
+.filter-btn:hover{border-color:var(--gold-border);color:var(--gold2);}
+.filter-btn.active{background:var(--gold3);border-color:var(--gold-border);color:var(--gold2);}
+.table-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:9px 16px;text-align:left;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);background:rgba(255,255,255,.02);border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:rgba(255,255,255,.02);}
+tbody td{padding:12px 16px;font-size:12.5px;color:var(--text2);vertical-align:middle;}
+.td-name{font-weight:700;color:var(--text);font-size:13px;}
+.td-uid{font-family:'JetBrains Mono';font-size:10px;color:var(--sub);}
+.td-mono{font-family:'JetBrains Mono';font-size:11.5px;}
+.td-gold{color:var(--gold2);font-weight:700;}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.04em;white-space:nowrap;}
+.badge-pending{background:rgba(243,156,18,.12);color:#f39c12;border:1px solid rgba(243,156,18,.25);}
+.badge-active{background:rgba(46,204,113,.12);color:var(--up);border:1px solid rgba(46,204,113,.25);}
+.badge-rejected{background:rgba(255,71,87,.1);color:#ff4757;border:1px solid rgba(255,71,87,.2);}
+.badge-suspended{background:rgba(155,89,182,.1);color:var(--purple);border:1px solid rgba(155,89,182,.2);}
+.badge-confirmed{background:rgba(46,204,113,.12);color:var(--up);border:1px solid rgba(46,204,113,.25);}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.lv-standard{background:rgba(255,255,255,.06);color:var(--text2);border:1px solid var(--border);}
+.lv-vip{background:rgba(212,175,55,.12);color:var(--gold2);border:1px solid var(--gold-border);}
+.lv-premium{background:rgba(155,89,182,.1);color:#c39bd3;border:1px solid rgba(155,89,182,.25);}
+
+/* ACTION BTNS */
+.action-row{display:flex;gap:5px;flex-wrap:wrap;}
+.act-btn{padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:'Syne',sans-serif;transition:all .18s;white-space:nowrap;}
+.act-approve{background:rgba(46,204,113,.15);color:var(--up);border:1px solid rgba(46,204,113,.3);}
+.act-approve:hover{background:rgba(46,204,113,.25);}
+.act-reject{background:rgba(255,71,87,.1);color:#ff4757;border:1px solid rgba(255,71,87,.25);}
+.act-reject:hover{background:rgba(255,71,87,.2);}
+.act-edit{background:rgba(74,158,255,.1);color:var(--blue);border:1px solid rgba(74,158,255,.25);}
+.act-edit:hover{background:rgba(74,158,255,.2);}
+.act-view{background:rgba(155,89,182,.1);color:var(--purple);border:1px solid rgba(155,89,182,.25);}
+.act-view:hover{background:rgba(155,89,182,.2);}
+.act-del{background:rgba(255,71,87,.07);color:#ff4757;border:1px solid rgba(255,71,87,.15);}
+.act-del:hover{background:rgba(255,71,87,.15);}
+.act-add{background:rgba(212,175,55,.12);color:var(--gold2);border:1px solid var(--gold-border);}
+.act-add:hover{background:rgba(212,175,55,.22);}
+
+/* TWO COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.card-block{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--card);border:1px solid var(--gold-border);border-radius:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:26px;position:relative;}
+.modal-wide{max-width:640px;}
+.modal-title{font-size:16px;font-weight:800;color:var(--text);margin-bottom:3px;}
+.modal-sub{font-size:10.5px;color:var(--sub);margin-bottom:20px;font-family:'JetBrains Mono';}
+.modal-close{position:absolute;top:16px;right:16px;width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,.06);border:none;color:var(--text2);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.modal-close:hover{background:rgba(255,71,87,.15);color:#ff4757;}
+.m-group{margin-bottom:13px;}
+.m-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:5px;display:block;}
+.m-input,.m-select,.m-textarea{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:10px 13px;font-size:13px;font-weight:500;color:var(--text);font-family:'Syne',sans-serif;outline:none;transition:border-color .2s;}
+.m-input:focus,.m-select:focus,.m-textarea:focus{border-color:var(--gold);}
+.m-select{cursor:pointer;}
+.m-select option{background:#1a1a2e;}
+.m-textarea{resize:vertical;min-height:80px;line-height:1.6;}
+.bal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.modal-footer{display:flex;gap:10px;margin-top:20px;}
+.btn-cancel{flex:1;padding:11px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text2);font-size:13px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:background .2s;}
+.btn-cancel:hover{background:rgba(255,255,255,.09);}
+.btn-save{flex:1;padding:11px;border-radius:10px;background:linear-gradient(135deg,#c9982e,var(--gold2));border:none;color:#000;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;transition:opacity .2s;}
+.btn-save:hover{opacity:.88;}
+.btn-confirm-green{flex:1;padding:11px;border-radius:10px;background:linear-gradient(135deg,#1a6e3c,#2ecc71);border:none;color:#fff;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;}
+.btn-confirm-red{flex:1;padding:11px;border-radius:10px;background:linear-gradient(135deg,#8b1a28,#ff4757);border:none;color:#fff;font-size:13px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;}
+
+/* RECEIPT IMAGE */
+.receipt-img-wrap{border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--card2);max-height:260px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
+.receipt-img-wrap img{max-width:100%;max-height:260px;object-fit:contain;}
+.no-receipt{padding:30px;text-align:center;color:var(--sub);font-size:12px;}
+
+/* SPARKLINES */
+.sp-row{display:flex;align-items:center;margin-bottom:8px;}
+.sp-label{font-size:12px;color:var(--text2);width:80px;flex-shrink:0;}
+.sp-bar-wrap{flex:1;margin:0 10px;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+.sp-bar{height:100%;border-radius:3px;transition:width .8s ease;}
+.sp-bar.gold-bar{background:linear-gradient(90deg,#c9982e,var(--gold2));}
+.sp-bar.green-bar{background:var(--up);}
+.sp-bar.red-bar{background:var(--dn);}
+.sp-bar.blue-bar{background:var(--blue);}
+.sp-val{font-size:12px;font-weight:700;font-family:'JetBrains Mono';color:var(--text2);width:25px;text-align:right;}
+.sparkline-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);margin-bottom:12px;}
+
+/* ACTIVITY */
+.activity-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.activity-item:last-child{border-bottom:none;}
+.act-ico-circle{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.act-ico-circle.gold{background:rgba(212,175,55,.12);}
+.act-ico-circle.green{background:rgba(46,204,113,.12);}
+.act-ico-circle.red{background:rgba(255,71,87,.1);}
+.act-ico-circle.blue{background:rgba(74,158,255,.1);}
+.act-text{flex:1;}
+.at-main{font-size:12.5px;font-weight:600;color:var(--text);}
+.at-sub{font-size:10.5px;color:var(--sub);margin-top:1px;font-family:'JetBrains Mono';}
+.act-time{font-size:10px;color:var(--sub);white-space:nowrap;font-family:'JetBrains Mono';}
+
+/* DEPOSIT DETAIL */
+.deposit-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.di-item{background:var(--card2);border-radius:10px;padding:10px 12px;border:1px solid var(--border);}
+.di-label{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);margin-bottom:3px;}
+.di-val{font-size:14px;font-weight:700;color:var(--text);}
+.di-val.gold{color:var(--gold2);}
+.di-val.green{color:var(--up);}
+
+/* TOAST */
+#toastContainer{position:fixed;top:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:7px;}
+.toast{padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px;animation:toastIn .3s ease;min-width:200px;max-width:300px;}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
+.toast-ok{background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.3);color:var(--up);}
+.toast-err{background:rgba(255,71,87,.15);border:1px solid rgba(255,71,87,.3);color:#ff4757;}
+.toast-info{background:rgba(74,158,255,.12);border:1px solid rgba(74,158,255,.25);color:var(--blue);}
+
+/* EMPTY & LOADING */
+.empty-state{text-align:center;padding:40px 20px;color:var(--sub);}
+.empty-ico{font-size:32px;margin-bottom:10px;}
+.loading-row{display:flex;align-items:center;justify-content:center;gap:10px;padding:30px;color:var(--sub);font-size:12px;}
+.spin{width:18px;height:18px;border:2px solid rgba(212,175,55,.2);border-top-color:var(--gold2);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* CONFIRM MODAL */
+.confirm-modal{max-width:340px;text-align:center;padding:30px;}
+
+/* ANNOUNCE */
+.ann-textarea{width:100%;min-height:90px;resize:vertical;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--text);font-family:'Syne',sans-serif;outline:none;transition:border-color .2s;line-height:1.6;}
+.ann-textarea:focus{border-color:var(--gold);}
+.announce-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;}
+.ann-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.ann-title2{font-size:13px;font-weight:700;color:var(--text);}
+.ann-meta{font-size:10px;color:var(--sub);font-family:'JetBrains Mono';}
+.ann-body{font-size:12.5px;color:var(--text2);line-height:1.6;}
+
+@media(max-width:900px){
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .two-col{grid-template-columns:1fr;}
+  :root{--sidebar-w:200px;}
+}
+</style>
+</head>
+<body>
+
+<!-- FIREBASE WARNING BANNER -->
+<div id="fbWarning">
+  <p>⚠️ <b>Firebase ချိတ်ဆက်မရပါ။</b> ဤ file ကို Claude.ai preview မှာ Firebase CDN scripts ကို block လုပ်ထားသောကြောင့် အလုပ်မဖြစ်ပါ။<br>
+  <b>ဖြေရှင်းနည်း:</b> File ကို Download ပြီး Browser မှ ဖွင့်ပါ သို့မဟုတ် GitHub Pages / Hosting တင်ပါ။</p>
+  <button class="fw-close" onclick="document.getElementById('fbWarning').style.display='none'">ပိတ်</button>
+</div>
+
+<!-- TOAST -->
+<div id="toastContainer"></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="crown">👑</span>
+      <h1>COMEX GOLD</h1>
+      <p>Trade Platform</p>
+      <span class="admin-badge">🔐 ADMIN PANEL</span>
+    </div>
+    <div class="l-group">
+      <label class="l-label">Admin Email</label>
+      <input class="l-input" id="loginEmail" type="email" placeholder="comexgoldtrade@gmail.com" autocomplete="email">
+    </div>
+    <div class="l-group">
+      <label class="l-label">Password</label>
+      <input class="l-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    </div>
+    <button class="btn-login" onclick="doAdminLogin()">🔑 &nbsp;Sign In to Admin</button>
+    <div class="l-err" id="loginErr"></div>
+    <p class="l-hint">Admin account ကို Firebase Console တွင် ဦးစွာ ဖန်တီးပါ<br><b>Email:</b> comexgoldtrade@gmail.com</p>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminApp" style="display:none">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <span class="crown2">👑</span>
+      <div><h2>COMEX</h2><p>Admin Console</p></div>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-section-label">Overview</div>
+      <div class="nav-item active" data-pg="dashboard" onclick="switchPg(this)"><span class="nav-ico">📊</span> Dashboard</div>
+
+      <div class="sb-section-label">Users</div>
+      <div class="nav-item" data-pg="users" onclick="switchPg(this)"><span class="nav-ico">👥</span> User Management <span class="nav-badge" id="nbPending">0</span></div>
+      <div class="nav-item" data-pg="pending-users" onclick="switchPg(this)"><span class="nav-ico">⏳</span> Pending Approval <span class="nav-badge" id="nbPending2">0</span></div>
+
+      <div class="sb-section-label">Finance</div>
+      <div class="nav-item" data-pg="deposits" onclick="switchPg(this)"><span class="nav-ico">💰</span> Deposits <span class="nav-badge gold-b" id="nbDeposits">0</span></div>
+      <div class="nav-item" data-pg="withdrawals" onclick="switchPg(this)"><span class="nav-ico">🏧</span> Withdrawals <span class="nav-badge gold-b" id="nbWithdrawals">0</span></div>
+      <div class="nav-item" data-pg="wallets" onclick="switchPg(this)"><span class="nav-ico">💳</span> Wallets</div>
+
+      <div class="sb-section-label">System</div>
+      <div class="nav-item" data-pg="announcements" onclick="switchPg(this)"><span class="nav-ico">📢</span> Announcements</div>
+      <div class="nav-item" data-pg="settings" onclick="switchPg(this)"><span class="nav-ico">⚙️</span> Settings</div>
+    </div>
+    <div class="sb-bottom">
+      <div class="admin-info">
+        <div class="admin-av" id="adminAv">A</div>
+        <div>
+          <div class="admin-info-name" id="adminName">Admin</div>
+          <div class="admin-info-email" id="adminEmailDisp">—</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">⏻ &nbsp;Sign Out</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="top-bar">
+      <div>
+        <div class="page-title" id="pgTitle">Dashboard</div>
+        <div class="page-sub" id="pgSub">Overview & Statistics</div>
+      </div>
+      <div class="tb-right">
+        <div class="tb-live"><span class="tb-dot"></span><span id="liveTime">--:--:--</span></div>
+        <button class="filter-btn" onclick="refreshAll()">↻ Refresh</button>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div class="pg active" id="pg-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card" style="--glow:rgba(212,175,55,.1)"><span class="stat-ico">👥</span><div class="stat-label">Total Users</div><div class="stat-val gold" id="st-total">—</div><div class="stat-sub">Registered</div></div>
+          <div class="stat-card" style="--glow:rgba(243,156,18,.1)"><span class="stat-ico">⏳</span><div class="stat-label">Pending</div><div class="stat-val orange" id="st-pending">—</div><div class="stat-sub">Awaiting approval</div></div>
+          <div class="stat-card" style="--glow:rgba(46,204,113,.08)"><span class="stat-ico">✅</span><div class="stat-label">Active Users</div><div class="stat-val green" id="st-active">—</div><div class="stat-sub">Approved</div></div>
+          <div class="stat-card" style="--glow:rgba(74,158,255,.08)"><span class="stat-ico">💰</span><div class="stat-label">Pending Deposits</div><div class="stat-val" id="st-deps" style="color:var(--blue)">—</div><div class="stat-sub">Awaiting confirm</div></div>
+        </div>
+        <div class="two-col" style="margin-bottom:16px">
+          <div class="card-block">
+            <div class="sparkline-title">User Status Distribution</div>
+            <div id="statusBars"><div class="loading-row"><div class="spin"></div>Loading...</div></div>
+          </div>
+          <div class="card-block">
+            <div class="sparkline-title">Account Levels</div>
+            <div id="levelBars"><div class="loading-row"><div class="spin"></div>Loading...</div></div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar"><span class="tb-title">🕐 &nbsp;Recent Registrations</span></div>
+          <div id="recentList" style="padding:0 16px"><div class="loading-row"><div class="spin"></div>Loading...</div></div>
+        </div>
+      </div>
+
+      <!-- ===== USERS ALL ===== -->
+      <div class="pg" id="pg-users">
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <div class="search-box"><span>🔍</span><input type="text" id="userSearch" placeholder="Search name, username..." oninput="renderUsers()"></div>
+            <button class="filter-btn active" id="fb-all"      onclick="setStatusFilter('all',this)">All</button>
+            <button class="filter-btn"         id="fb-pending"  onclick="setStatusFilter('pending',this)">⏳ Pending</button>
+            <button class="filter-btn"         id="fb-active"   onclick="setStatusFilter('active',this)">✅ Active</button>
+            <button class="filter-btn"         id="fb-suspended" onclick="setStatusFilter('suspended',this)">🚫 Suspended</button>
+            <button class="filter-btn"         id="fb-rejected" onclick="setStatusFilter('rejected',this)">❌ Rejected</button>
+            <button class="act-btn act-add" style="margin-left:auto" onclick="openAddUserModal()">+ Add User</button>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>User</th><th>Contact</th><th>Status</th><th>Level</th>
+                <th>USD</th><th>MMK</th><th>Joined</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="userTableBody"><tr><td colspan="8"><div class="loading-row"><div class="spin"></div>Loading...</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PENDING USERS ===== -->
+      <div class="pg" id="pg-pending-users">
+        <div class="table-wrap">
+          <div class="table-toolbar"><span class="tb-title">⏳ &nbsp;Users Awaiting Approval</span></div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>User</th><th>Contact / Email</th><th>Registered</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="pendingTableBody"><tr><td colspan="4"><div class="loading-row"><div class="spin"></div>Loading...</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DEPOSITS ===== -->
+      <div class="pg" id="pg-deposits">
+        <div class="stat-grid-3" style="margin-bottom:16px">
+          <div class="stat-card"><span class="stat-ico">⏳</span><div class="stat-label">Pending</div><div class="stat-val orange" id="dep-pending">—</div></div>
+          <div class="stat-card"><span class="stat-ico">✅</span><div class="stat-label">Confirmed</div><div class="stat-val green" id="dep-confirmed">—</div></div>
+          <div class="stat-card"><span class="stat-ico">❌</span><div class="stat-label">Rejected</div><div class="stat-val red" id="dep-rejected">—</div></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <span class="tb-title">💰 &nbsp;Deposit Requests</span>
+            <button class="filter-btn active" id="df-all"       onclick="setDepFilter('all',this)">All</button>
+            <button class="filter-btn"         id="df-pending"   onclick="setDepFilter('pending',this)">⏳ Pending</button>
+            <button class="filter-btn"         id="df-confirmed" onclick="setDepFilter('confirmed',this)">✅ Confirmed</button>
+            <button class="filter-btn"         id="df-rejected"  onclick="setDepFilter('rejected',this)">❌ Rejected</button>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>User</th><th>Amount</th><th>Currency</th><th>Status</th><th>Receipt</th><th>Date</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="depositTableBody"><tr><td colspan="7"><div class="loading-row"><div class="spin"></div>Loading...</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== WITHDRAWALS ===== -->
+      <div class="pg" id="pg-withdrawals">
+        <div class="stat-grid-3" style="margin-bottom:16px">
+          <div class="stat-card"><span class="stat-ico">⏳</span><div class="stat-label">Pending</div><div class="stat-val orange" id="wth-pending">—</div></div>
+          <div class="stat-card"><span class="stat-ico">✅</span><div class="stat-label">Confirmed</div><div class="stat-val green" id="wth-confirmed">—</div></div>
+          <div class="stat-card"><span class="stat-ico">❌</span><div class="stat-label">Rejected</div><div class="stat-val red" id="wth-rejected">—</div></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <span class="tb-title">🏧 &nbsp;Withdrawal Requests</span>
+            <button class="filter-btn active" id="wf-all"       onclick="setWthFilter('all',this)">All</button>
+            <button class="filter-btn"         id="wf-pending"   onclick="setWthFilter('pending',this)">⏳ Pending</button>
+            <button class="filter-btn"         id="wf-confirmed" onclick="setWthFilter('confirmed',this)">✅ Confirmed</button>
+            <button class="filter-btn"         id="wf-rejected"  onclick="setWthFilter('rejected',this)">❌ Rejected</button>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>User</th><th>Amount</th><th>Account Info</th><th>Status</th><th>Date</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="withdrawalTableBody"><tr><td colspan="6"><div class="loading-row"><div class="spin"></div>Loading...</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== WALLETS ===== -->
+      <div class="pg" id="pg-wallets">
+        <div class="stat-grid-3" style="margin-bottom:16px">
+          <div class="stat-card"><span class="stat-ico">💵</span><div class="stat-label">Total USD</div><div class="stat-val gold" id="wl-usd">—</div></div>
+          <div class="stat-card"><span class="stat-ico">🏅</span><div class="stat-label">Total WG</div><div class="stat-val gold" id="wl-wg">—</div></div>
+          <div class="stat-card"><span class="stat-ico">🪙</span><div class="stat-label">Total MMK</div><div class="stat-val gold" id="wl-mmk">—</div></div>
+        </div>
+        <div class="table-wrap">
+          <div class="table-toolbar"><span class="tb-title">💳 &nbsp;User Wallets</span></div>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>User</th><th>USD</th><th>WG</th><th>MMK</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="walletTableBody"><tr><td colspan="6"><div class="loading-row"><div class="spin"></div>Loading...</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ANNOUNCEMENTS ===== -->
+      <div class="pg" id="pg-announcements">
+        <div class="two-col">
+          <div>
+            <div class="card-block">
+              <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:16px">📤 Send Announcement</div>
+              <div class="m-group"><label class="m-label">Title</label><input class="m-input" id="annTitle" placeholder="Announcement title..."></div>
+              <div class="m-group"><label class="m-label">Type</label>
+                <select class="m-select" id="annType">
+                  <option value="info">📢 Info</option>
+                  <option value="alert">⚠️ Alert</option>
+                  <option value="profit">💰 Profit / Promo</option>
+                  <option value="maintenance">🔧 Maintenance</option>
+                </select>
+              </div>
+              <div class="m-group"><label class="m-label">Message</label><textarea class="ann-textarea" id="annBody" placeholder="Enter message..."></textarea></div>
+              <button class="btn-save" style="width:100%;padding:12px" onclick="postAnnouncement()">📤 &nbsp;Publish</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">📋 Published</div>
+            <div id="annList"><div class="loading-row"><div class="spin"></div>Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS ===== -->
+      <div class="pg" id="pg-settings">
+        <div style="max-width:480px">
+          <div class="card-block" style="margin-bottom:14px">
+            <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:16px">🔐 Admin Account</div>
+            <div class="m-group"><label class="m-label">Display Name</label><input class="m-input" id="settName" placeholder="Admin name"></div>
+            <div class="m-group"><label class="m-label">Current Password</label><input class="m-input" id="settOldPass" type="password" placeholder="Current password"></div>
+            <div class="m-group"><label class="m-label">New Password</label><input class="m-input" id="settNewPass" type="password" placeholder="Leave blank to keep"></div>
+            <button class="btn-save" style="width:100%;padding:12px" onclick="saveSettings()">💾 &nbsp;Save</button>
+          </div>
+          <div class="card-block">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">📊 Firebase Project</div>
+            <div style="font-family:'JetBrains Mono';font-size:11px;color:var(--sub);line-height:2.2">
+              <div>Project ID: <span style="color:var(--gold2)">comex-gold</span></div>
+              <div>Auth Domain: <span style="color:var(--text2)">comex-gold.firebaseapp.com</span></div>
+              <div>Database: <span style="color:var(--text2)">asia-southeast1</span></div>
+              <div>Admin Email: <span style="color:var(--gold2)">comexgoldtrade@gmail.com</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /main-content -->
+</div><!-- /adminApp -->
+
+<!-- ===== EDIT USER MODAL ===== -->
+<div class="modal-bg" id="editModal" style="display:none" onclick="if(event.target===this)closeModal('editModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    <div class="modal-title">Edit User</div>
+    <div class="modal-sub" id="editModalSub">UID: —</div>
+    <div class="m-group"><label class="m-label">Real Name</label><input class="m-input" id="eRealName" placeholder="Full name"></div>
+    <div class="m-group"><label class="m-label">Username</label><input class="m-input" id="eUsername" placeholder="Username"></div>
+    <div class="m-group"><label class="m-label">Contact</label><input class="m-input" id="eContact" placeholder="+95 9..."></div>
+    <div class="m-group"><label class="m-label">Status</label>
+      <select class="m-select" id="eStatus">
+        <option value="pending">⏳ Pending</option>
+        <option value="active">✅ Active</option>
+        <option value="suspended">🚫 Suspended</option>
+        <option value="rejected">❌ Rejected</option>
+      </select>
+    </div>
+    <div class="m-group"><label class="m-label">Level</label>
+      <select class="m-select" id="eLevel">
+        <option value="standard">Standard</option>
+        <option value="vip">VIP ⭐</option>
+        <option value="premium">Premium 💎</option>
+      </select>
+    </div>
+    <div class="m-group">
+      <label class="m-label">Balance</label>
+      <div class="bal-grid">
+        <div><label class="m-label" style="margin-bottom:4px">USD ($)</label><input class="m-input" id="eBal_usd" type="number" placeholder="0" min="0"></div>
+        <div><label class="m-label" style="margin-bottom:4px">WG (g)</label><input class="m-input" id="eBal_wg" type="number" placeholder="0" min="0"></div>
+        <div><label class="m-label" style="margin-bottom:4px">MMK (K)</label><input class="m-input" id="eBal_mmk" type="number" placeholder="0" min="0"></div>
+      </div>
+    </div>
+    <div class="m-group"><label class="m-label">Admin Note</label><input class="m-input" id="eNote" placeholder="Optional note..."></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('editModal')">Cancel</button>
+      <button class="btn-save" onclick="saveUser()">💾 &nbsp;Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD USER MODAL ===== -->
+<div class="modal-bg" id="addUserModal" style="display:none" onclick="if(event.target===this)closeModal('addUserModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('addUserModal')">✕</button>
+    <div class="modal-title">Add New User</div>
+    <div class="modal-sub">Manually create account</div>
+    <div class="m-group"><label class="m-label">Real Name</label><input class="m-input" id="aRealName"></div>
+    <div class="m-group"><label class="m-label">Username</label><input class="m-input" id="aUsername"></div>
+    <div class="m-group"><label class="m-label">Email</label><input class="m-input" id="aEmail" type="email"></div>
+    <div class="m-group"><label class="m-label">Password (min 8)</label><input class="m-input" id="aPass" type="password"></div>
+    <div class="m-group"><label class="m-label">Contact</label><input class="m-input" id="aContact" placeholder="+95 9..."></div>
+    <div class="m-group"><label class="m-label">Level</label>
+      <select class="m-select" id="aLevel"><option value="standard">Standard</option><option value="vip">VIP ⭐</option><option value="premium">Premium 💎</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('addUserModal')">Cancel</button>
+      <button class="btn-save" onclick="addUser()">➕ &nbsp;Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DEPOSIT DETAIL MODAL ===== -->
+<div class="modal-bg" id="depositModal" style="display:none" onclick="if(event.target===this)closeModal('depositModal')">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeModal('depositModal')">✕</button>
+    <div class="modal-title">💰 Deposit Request</div>
+    <div class="modal-sub" id="depModalSub">—</div>
+    <div class="deposit-info-grid">
+      <div class="di-item"><div class="di-label">User</div><div class="di-val" id="depUser">—</div></div>
+      <div class="di-item"><div class="di-label">Amount</div><div class="di-val gold" id="depAmount">—</div></div>
+      <div class="di-item"><div class="di-label">Currency</div><div class="di-val" id="depCurrency">—</div></div>
+      <div class="di-item"><div class="di-label">Current Status</div><div class="di-val" id="depStatus">—</div></div>
+    </div>
+    <div class="m-label" style="margin-bottom:8px">Payment Receipt</div>
+    <div class="receipt-img-wrap" id="receiptWrap">
+      <div class="no-receipt">📄 No receipt uploaded</div>
+    </div>
+    <div class="m-group"><label class="m-label">Admin Note (optional)</label><input class="m-input" id="depNote" placeholder="Reason or note..."></div>
+    <div class="modal-footer" id="depActions">
+      <button class="btn-cancel" onclick="closeModal('depositModal')">Close</button>
+      <button class="btn-confirm-red" onclick="processDeposit('rejected')">❌ &nbsp;Reject</button>
+      <button class="btn-confirm-green" onclick="processDeposit('confirmed')">✅ &nbsp;Confirm & Credit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== WITHDRAWAL DETAIL MODAL ===== -->
+<div class="modal-bg" id="wthModal" style="display:none" onclick="if(event.target===this)closeModal('wthModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('wthModal')">✕</button>
+    <div class="modal-title">🏧 Withdrawal Request</div>
+    <div class="modal-sub" id="wthModalSub">—</div>
+    <div class="deposit-info-grid">
+      <div class="di-item"><div class="di-label">User</div><div class="di-val" id="wthUser">—</div></div>
+      <div class="di-item"><div class="di-label">Amount</div><div class="di-val gold" id="wthAmount">—</div></div>
+      <div class="di-item"><div class="di-label">Current Status</div><div class="di-val" id="wthStatus">—</div></div>
+      <div class="di-item"><div class="di-label">Submitted</div><div class="di-val" id="wthDate">—</div></div>
+    </div>
+    <div class="m-group">
+      <label class="m-label">Account / Bank Info</label>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:13px;color:var(--text2);line-height:1.6;font-family:'JetBrains Mono'" id="wthAccInfo">—</div>
+    </div>
+    <div class="m-group"><label class="m-label">Admin Note</label><input class="m-input" id="wthNote" placeholder="Reason or note..."></div>
+    <div class="modal-footer" id="wthActions">
+      <button class="btn-cancel" onclick="closeModal('wthModal')">Close</button>
+      <button class="btn-confirm-red" onclick="processWithdrawal('rejected')">❌ &nbsp;Reject</button>
+      <button class="btn-confirm-green" onclick="processWithdrawal('confirmed')">✅ &nbsp;Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONFIRM MODAL ===== -->
+<div class="modal-bg" id="confirmModal" style="display:none">
+  <div class="modal confirm-modal">
+    <div style="font-size:36px;margin-bottom:12px" id="confirmIco">⚠️</div>
+    <div class="modal-title" id="confirmTitle" style="font-size:16px;margin-bottom:8px">Are you sure?</div>
+    <div style="font-size:12.5px;color:var(--text2);margin-bottom:22px" id="confirmBody">This cannot be undone.</div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn-confirm-red" id="confirmOk">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+<script>
+// ========== FIREBASE ==========
+const firebaseConfig = {
+  apiKey:"AIzaSyA8FRrFcrkkHGgPwPkiRCY90-SOueRLrDY",
+  authDomain:"comex-gold.firebaseapp.com",
+  databaseURL:"https://comex-gold-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"comex-gold",
+  storageBucket:"comex-gold.firebasestorage.app",
+  messagingSenderId:"698161924390",
+  appId:"1:698161924390:web:f959ce4c74c0a623fc99e7",
+  measurementId:"G-5ZERCCNH7E"
+};
+
+// ADMIN CREDENTIALS
+const ADMIN_EMAIL    = 'comexgoldtrade@gmail.com';
+const ADMIN_PASSWORD = 'COMEX_GOLDTRADE_8888';
+
+let app, auth, db, storage;
+let fbReady = false;
+
+function initFirebase() {
+  try {
+    if (typeof firebase === 'undefined') throw new Error('Firebase SDK not loaded');
+    app     = firebase.initializeApp(firebaseConfig);
+    auth    = firebase.auth();
+    db      = firebase.firestore();
+    storage = firebase.storage();
+    fbReady = true;
+    console.log('Firebase initialized ✅');
+    setupAuthListener();
+  } catch(e) {
+    console.warn('Firebase init error:', e.message);
+    document.getElementById('fbWarning').style.display = 'flex';
+  }
+}
+
+// Wait for scripts to load
+window.addEventListener('load', initFirebase);
+
+// ========== AUTH LISTENER ==========
+function setupAuthListener() {
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      // Restrict to admin only
+      if (user.email !== ADMIN_EMAIL) {
+        toast('Access denied. Admin only.', 'err');
+        await auth.signOut();
+        return;
+      }
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('adminApp').style.display    = 'flex';
+      document.getElementById('adminAv').textContent       = user.email.charAt(0).toUpperCase();
+      document.getElementById('adminName').textContent     = user.displayName || 'Admin';
+      document.getElementById('adminEmailDisp').textContent = user.email;
+      document.getElementById('settName').value            = user.displayName || '';
+      startClock();
+      loadAll();
+    } else {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('adminApp').style.display    = 'none';
+    }
+  });
+}
+
+// ========== LOGIN ==========
+async function doAdminLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.textContent = '';
+
+  if (!fbReady) { errEl.textContent = '⚠️ Firebase မချိတ်ဆက်ရသေး - File ကို Browser မှ ဖွင့်ပါ'; return; }
+  if (!email || !pass) { errEl.textContent = '⚠️ Please fill all fields.'; return; }
+  if (email !== ADMIN_EMAIL) { errEl.textContent = '❌ Admin account မဟုတ်ပါ။'; return; }
+
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found':    '❌ Admin account မတွေ့ပါ — Firebase Console တွင် ဦးစွာ create လုပ်ပါ။',
+      'auth/wrong-password':    '❌ Password မှားနေသည်။',
+      'auth/invalid-credential':'❌ Email/Password မှားနေသည်။',
+      'auth/invalid-email':     '❌ Email format မမှန်ပါ။',
+      'auth/too-many-requests': '⚠️ Too many attempts. Try again later.',
+    };
+    errEl.textContent = msgs[e.code] || '❌ ' + e.message;
+  }
+}
+
+async function doLogout() {
+  if (auth) await auth.signOut();
+}
+
+// ========== STATE ==========
+let allUsers    = [];
+let allDeposits = [];
+let allWths     = [];
+let userFilter  = 'all';
+let depFilter   = 'all';
+let wthFilter   = 'all';
+let editingUID  = null;
+let activeDepId = null;
+let activeWthId = null;
+
+// ========== PAGE META ==========
+const pgMeta = {
+  dashboard:     {title:'Dashboard',          sub:'Overview & Statistics'},
+  users:         {title:'User Management',    sub:'All Registered Accounts'},
+  'pending-users':{title:'Pending Approval',  sub:'Users awaiting admin review'},
+  deposits:      {title:'Deposit Requests',   sub:'Manage incoming deposits'},
+  withdrawals:   {title:'Withdrawal Requests',sub:'Manage withdrawal requests'},
+  wallets:       {title:'Wallets',            sub:'User Balance Overview'},
+  announcements: {title:'Announcements',      sub:'Publish messages to users'},
+  settings:      {title:'Settings',           sub:'Admin configuration'},
+};
+
+function switchPg(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  const pg = el.dataset.pg;
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('active'));
+  document.getElementById('pg-'+pg).classList.add('active');
+  const m = pgMeta[pg] || {};
+  document.getElementById('pgTitle').textContent = m.title || pg;
+  document.getElementById('pgSub').textContent   = m.sub   || '';
+  if (pg === 'wallets')       renderWallets();
+  if (pg === 'deposits')      renderDeposits();
+  if (pg === 'withdrawals')   renderWithdrawals();
+  if (pg === 'announcements') loadAnnouncements();
+}
+
+// ========== LOAD ALL ==========
+function loadAll() {
+  loadUsers();
+  loadDeposits();
+  loadWithdrawals();
+}
+function refreshAll() {
+  loadAll();
+  toast('Refreshed','info');
+}
+
+// ========== LOAD USERS ==========
+async function loadUsers() {
+  try {
+    const snap = await db.collection('users').orderBy('createdAt','desc').get();
+    allUsers = snap.docs.map(d => ({uid: d.id, ...d.data()}));
+    renderDashboard();
+    renderUsers();
+    renderPendingUsers();
+    renderWallets();
+    updateBadges();
+  } catch(e) {
+    console.error(e);
+    toast('Error loading users: '+e.message,'err');
+  }
+}
+
+// ========== LOAD DEPOSITS ==========
+async function loadDeposits() {
+  try {
+    const snap = await db.collection('deposits').orderBy('createdAt','desc').get();
+    allDeposits = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    renderDeposits();
+    updateDepBadge();
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ========== LOAD WITHDRAWALS ==========
+async function loadWithdrawals() {
+  try {
+    const snap = await db.collection('withdrawals').orderBy('createdAt','desc').get();
+    allWths = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    renderWithdrawals();
+    updateWthBadge();
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+// ========== BADGES ==========
+function updateBadges() {
+  const p = allUsers.filter(u => u.status==='pending').length;
+  document.getElementById('nbPending').textContent  = p;
+  document.getElementById('nbPending2').textContent = p;
+}
+function updateDepBadge() {
+  const p = allDeposits.filter(d => d.status==='pending').length;
+  document.getElementById('nbDeposits').textContent = p;
+}
+function updateWthBadge() {
+  const p = allWths.filter(w => w.status==='pending').length;
+  document.getElementById('nbWithdrawals').textContent = p;
+}
+
+// ========== DASHBOARD ==========
+function renderDashboard() {
+  const total     = allUsers.length;
+  const pending   = allUsers.filter(u=>u.status==='pending').length;
+  const active    = allUsers.filter(u=>u.status==='active').length;
+  const depPend   = allDeposits.filter(d=>d.status==='pending').length;
+
+  document.getElementById('st-total').textContent   = total;
+  document.getElementById('st-pending').textContent = pending;
+  document.getElementById('st-active').textContent  = active;
+  document.getElementById('st-deps').textContent    = depPend;
+
+  const mk = (n,t) => `<div class="sp-row"><span class="sp-label">${n}</span><div class="sp-bar-wrap"><div class="sp-bar ${n.includes('Active')?'green-bar':n.includes('Pending')?'gold-bar':'red-bar'}" style="width:${t>0?Math.round(n.includes('Active')?active/t*100:n.includes('Pending')?pending/t*100:(t-active-pending)/t*100):0}%"></div></div><span class="sp-val">${n.includes('Active')?active:n.includes('Pending')?pending:(t-active-pending)}</span></div>`;
+
+  const statusHtml = ['Active Users','Pending Approval','Suspended/Rejected'].map(n => {
+    const count = n==='Active Users' ? active : n==='Pending Approval' ? pending : total-active-pending;
+    const cls   = n==='Active Users' ? 'green-bar' : n==='Pending Approval' ? 'gold-bar' : 'red-bar';
+    const pct   = total>0 ? Math.round(count/total*100) : 0;
+    return `<div class="sp-row"><span class="sp-label">${n}</span><div class="sp-bar-wrap"><div class="sp-bar ${cls}" style="width:${pct}%"></div></div><span class="sp-val">${count}</span></div>`;
+  }).join('');
+  document.getElementById('statusBars').innerHTML = statusHtml;
+
+  const lvS = allUsers.filter(u=>u.level==='standard'||!u.level).length;
+  const lvV = allUsers.filter(u=>u.level==='vip').length;
+  const lvP = allUsers.filter(u=>u.level==='premium').length;
+  const levelHtml = [['Standard',lvS,'blue-bar'],['VIP ⭐',lvV,'gold-bar'],['Premium 💎',lvP,'green-bar']].map(([n,c,cls])=>`<div class="sp-row"><span class="sp-label">${n}</span><div class="sp-bar-wrap"><div class="sp-bar ${cls}" style="width:${total>0?Math.round(c/total*100):0}%"></div></div><span class="sp-val">${c}</span></div>`).join('');
+  document.getElementById('levelBars').innerHTML = levelHtml;
+
+  const recent = allUsers.slice(0,8);
+  if (!recent.length) { document.getElementById('recentList').innerHTML='<div class="empty-state"><div class="empty-ico">👥</div><p>No users yet.</p></div>'; return; }
+  document.getElementById('recentList').innerHTML = recent.map(u=>`
+    <div class="activity-item">
+      <div class="act-ico-circle ${u.status==='active'?'green':u.status==='pending'?'gold':'red'}">${u.status==='active'?'✅':u.status==='pending'?'⏳':'🚫'}</div>
+      <div class="act-text">
+        <div class="at-main">${esc(u.realName||'—')} <span style="color:var(--sub);font-weight:400">@${esc(u.username||'—')}</span></div>
+        <div class="at-sub">${esc(u.contact||u.email||'—')}</div>
+      </div>
+      <span class="act-time">${fmtDate(u.createdAt)}</span>
+    </div>`).join('');
+}
+
+// ========== USERS TABLE ==========
+function renderUsers() {
+  const q = (document.getElementById('userSearch').value||'').toLowerCase();
+  let list = allUsers;
+  if (userFilter!=='all') list = list.filter(u=>u.status===userFilter);
+  if (q) list = list.filter(u=>(u.realName||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q)||(u.contact||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q));
+  const tb = document.getElementById('userTableBody');
+  if (!list.length) { tb.innerHTML=`<tr><td colspan="8"><div class="empty-state"><div class="empty-ico">🔍</div><p>No users found.</p></div></td></tr>`; return; }
+  tb.innerHTML = list.map(u=>`<tr>
+    <td><div class="td-name">${esc(u.realName||'—')}</div><div class="td-uid">@${esc(u.username||'—')}</div></td>
+    <td><div style="font-size:12px">${esc(u.contact||'—')}</div><div class="td-uid">${esc(u.email||'—')}</div></td>
+    <td>${statusBadge(u.status)}</td>
+    <td>${levelBadge(u.level)}</td>
+    <td class="td-mono td-gold">$${(u.balance?.usd??0).toLocaleString()}</td>
+    <td class="td-mono" style="color:var(--text2)">${(u.balance?.mmk??0).toLocaleString()} K</td>
+    <td class="td-uid">${fmtDate(u.createdAt)}</td>
+    <td>
+      <div class="action-row">
+        ${u.status==='pending'?`<button class="act-btn act-approve" onclick="quickApprove('${u.uid}')">✅ Accept</button><button class="act-btn act-reject" onclick="quickReject('${u.uid}')">❌ Cancel</button>`:''}
+        <button class="act-btn act-edit" onclick="openEditModal('${u.uid}')">✏️ Edit</button>
+        <button class="act-btn act-del"  onclick="confirmDelete('${u.uid}','${esc(u.realName||u.uid)}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function setStatusFilter(s, el) {
+  userFilter = s;
+  document.querySelectorAll('[id^="fb-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderUsers();
+}
+
+// ========== PENDING USERS ==========
+function renderPendingUsers() {
+  const list = allUsers.filter(u=>u.status==='pending');
+  const tb = document.getElementById('pendingTableBody');
+  if (!list.length) {
+    tb.innerHTML=`<tr><td colspan="4"><div class="empty-state"><div class="empty-ico">🎉</div><p>No pending users — all caught up!</p></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = list.map(u=>`<tr>
+    <td>
+      <div class="td-name">${esc(u.realName||'—')}</div>
+      <div class="td-uid">@${esc(u.username||'—')}</div>
+    </td>
+    <td>
+      <div style="font-size:12px">${esc(u.contact||'—')}</div>
+      <div class="td-uid">${esc(u.email||'—')}</div>
+    </td>
+    <td class="td-uid">${fmtDate(u.createdAt)}</td>
+    <td>
+      <div class="action-row">
+        <button class="act-btn act-approve" style="padding:7px 16px;font-size:12px" onclick="quickApprove('${u.uid}')">✅ &nbsp;Accept</button>
+        <button class="act-btn act-reject"  style="padding:7px 16px;font-size:12px" onclick="quickReject('${u.uid}')">❌ &nbsp;Cancel</button>
+        <button class="act-btn act-edit"    onclick="openEditModal('${u.uid}')">✏️ Edit</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+// ========== QUICK APPROVE / REJECT ==========
+async function quickApprove(uid) {
+  try {
+    await db.collection('users').doc(uid).update({status:'active', approvedAt: firebase.firestore.FieldValue.serverTimestamp(), approvedBy: auth.currentUser?.email});
+    const u = allUsers.find(x=>x.uid===uid); if (u) u.status='active';
+    renderDashboard(); renderUsers(); renderPendingUsers(); updateBadges();
+    toast('User Approved ✅','ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+}
+
+async function quickReject(uid) {
+  try {
+    await db.collection('users').doc(uid).update({status:'rejected', rejectedAt: firebase.firestore.FieldValue.serverTimestamp(), rejectedBy: auth.currentUser?.email});
+    const u = allUsers.find(x=>x.uid===uid); if (u) u.status='rejected';
+    renderDashboard(); renderUsers(); renderPendingUsers(); updateBadges();
+    toast('User Rejected ❌','info');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+}
+
+// ========== EDIT USER ==========
+function openEditModal(uid) {
+  const u = allUsers.find(x=>x.uid===uid); if (!u) return;
+  editingUID = uid;
+  document.getElementById('editModalSub').textContent = 'UID: '+uid;
+  document.getElementById('eRealName').value = u.realName||'';
+  document.getElementById('eUsername').value = u.username||'';
+  document.getElementById('eContact').value  = u.contact||'';
+  document.getElementById('eStatus').value   = u.status||'pending';
+  document.getElementById('eLevel').value    = u.level||'standard';
+  document.getElementById('eBal_usd').value  = u.balance?.usd??0;
+  document.getElementById('eBal_wg').value   = u.balance?.wg??0;
+  document.getElementById('eBal_mmk').value  = u.balance?.mmk??0;
+  document.getElementById('eNote').value     = u.adminNote||'';
+  document.getElementById('editModal').style.display='flex';
+}
+
+async function saveUser() {
+  if (!editingUID) return;
+  try {
+    const data = {
+      realName:  document.getElementById('eRealName').value.trim(),
+      username:  document.getElementById('eUsername').value.trim(),
+      contact:   document.getElementById('eContact').value.trim(),
+      status:    document.getElementById('eStatus').value,
+      level:     document.getElementById('eLevel').value,
+      adminNote: document.getElementById('eNote').value.trim(),
+      balance: {
+        usd: Number(document.getElementById('eBal_usd').value)||0,
+        wg:  Number(document.getElementById('eBal_wg').value)||0,
+        mmk: Number(document.getElementById('eBal_mmk').value)||0,
+      },
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedBy: auth.currentUser?.email,
+    };
+    await db.collection('users').doc(editingUID).update(data);
+    const idx = allUsers.findIndex(x=>x.uid===editingUID);
+    if (idx!==-1) allUsers[idx] = {...allUsers[idx], ...data};
+    closeModal('editModal');
+    renderDashboard(); renderUsers(); renderPendingUsers(); renderWallets(); updateBadges();
+    toast('User updated ✅','ok');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+}
+
+// ========== ADD USER ==========
+function openAddUserModal() {
+  ['aRealName','aUsername','aEmail','aPass','aContact'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('aLevel').value='standard';
+  document.getElementById('addUserModal').style.display='flex';
+}
+
+async function addUser() {
+  const name=document.getElementById('aRealName').value.trim();
+  const uname=document.getElementById('aUsername').value.trim();
+  const email=document.getElementById('aEmail').value.trim();
+  const pass=document.getElementById('aPass').value;
+  const contact=document.getElementById('aContact').value.trim();
+  const level=document.getElementById('aLevel').value;
+  if (!name||!uname||!email||!pass) { toast('Please fill required fields.','err'); return; }
+  if (pass.length<8) { toast('Password must be 8+ chars.','err'); return; }
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    await db.collection('users').doc(cred.user.uid).set({
+      realName:name, username:uname, contact, email,
+      status:'active', level,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      balance:{usd:0, wg:0, mmk:0},
+    });
+    closeModal('addUserModal');
+    toast('User created ✅','ok');
+    await loadUsers();
+  } catch(e) {
+    const msgs={'auth/email-already-in-use':'❌ Email already used.','auth/weak-password':'⚠️ Password too weak.'};
+    toast(msgs[e.code]||'❌ '+e.message,'err');
+  }
+}
+
+// ========== DELETE USER ==========
+function confirmDelete(uid,name) {
+  document.getElementById('confirmIco').textContent  = '🗑️';
+  document.getElementById('confirmTitle').textContent= 'Delete User?';
+  document.getElementById('confirmBody').textContent = `"${name}" ကို Firestore မှ ဖျက်မည်။`;
+  document.getElementById('confirmOk').onclick = ()=>deleteUser(uid);
+  document.getElementById('confirmModal').style.display='flex';
+}
+async function deleteUser(uid) {
+  try {
+    await db.collection('users').doc(uid).delete();
+    allUsers = allUsers.filter(u=>u.uid!==uid);
+    closeModal('confirmModal');
+    renderDashboard(); renderUsers(); renderPendingUsers(); renderWallets(); updateBadges();
+    toast('User deleted 🗑️','info');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+}
+
+// ========== WALLETS ==========
+function renderWallets() {
+  let tu=0,tw=0,tm=0;
+  allUsers.forEach(u=>{tu+=Number(u.balance?.usd||0);tw+=Number(u.balance?.wg||0);tm+=Number(u.balance?.mmk||0);});
+  document.getElementById('wl-usd').textContent='$'+tu.toLocaleString();
+  document.getElementById('wl-wg').textContent=tw.toFixed(4)+' g';
+  document.getElementById('wl-mmk').textContent=tm.toLocaleString()+' K';
+  const tb=document.getElementById('walletTableBody');
+  if (!allUsers.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-ico">💰</div><p>No data.</p></div></td></tr>`;return;}
+  tb.innerHTML=allUsers.map(u=>`<tr>
+    <td><div class="td-name">${esc(u.realName||'—')}</div><div class="td-uid">@${esc(u.username||'—')}</div></td>
+    <td class="td-mono td-gold">$${(u.balance?.usd??0).toLocaleString()}</td>
+    <td class="td-mono td-gold">${(u.balance?.wg??0)} g</td>
+    <td class="td-mono" style="color:var(--text2)">${(u.balance?.mmk??0).toLocaleString()} K</td>
+    <td>${statusBadge(u.status)}</td>
+    <td><button class="act-btn act-edit" onclick="openEditModal('${u.uid}')">✏️ Edit Balance</button></td>
+  </tr>`).join('');
+}
+
+// ========== DEPOSITS ==========
+function renderDeposits() {
+  const pending   = allDeposits.filter(d=>d.status==='pending').length;
+  const confirmed = allDeposits.filter(d=>d.status==='confirmed').length;
+  const rejected  = allDeposits.filter(d=>d.status==='rejected').length;
+  document.getElementById('dep-pending').textContent   = pending;
+  document.getElementById('dep-confirmed').textContent = confirmed;
+  document.getElementById('dep-rejected').textContent  = rejected;
+
+  let list = depFilter==='all' ? allDeposits : allDeposits.filter(d=>d.status===depFilter);
+  const tb = document.getElementById('depositTableBody');
+  if (!list.length){ tb.innerHTML=`<tr><td colspan="7"><div class="empty-state"><div class="empty-ico">💰</div><p>No deposit records.</p></div></td></tr>`; return; }
+  tb.innerHTML = list.map(d=>`<tr>
+    <td><div class="td-name">${esc(d.realName||d.userId||'—')}</div><div class="td-uid">@${esc(d.username||'—')}</div></td>
+    <td class="td-mono td-gold">$${Number(d.amount||0).toLocaleString()}</td>
+    <td class="td-mono">${esc(d.currency||'USD')}</td>
+    <td>${depBadge(d.status)}</td>
+    <td>${d.receiptUrl?`<span style="font-size:11px;color:var(--blue);cursor:pointer" onclick="openDepModal('${d.id}')">📎 View</span>`:'<span style="color:var(--sub);font-size:11px">No file</span>'}</td>
+    <td class="td-uid">${fmtDate(d.createdAt)}</td>
+    <td>
+      <div class="action-row">
+        <button class="act-btn act-view" onclick="openDepModal('${d.id}')">🔍 Detail</button>
+        ${d.status==='pending'?`<button class="act-btn act-approve" onclick="openDepModal('${d.id}')">✅ Confirm</button><button class="act-btn act-reject" onclick="quickDepReject('${d.id}')">❌ Reject</button>`:''}
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function setDepFilter(f,el) {
+  depFilter=f;
+  document.querySelectorAll('[id^="df-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderDeposits();
+}
+
+function openDepModal(id) {
+  const d = allDeposits.find(x=>x.id===id); if (!d) return;
+  activeDepId = id;
+  document.getElementById('depModalSub').textContent = 'ID: '+id;
+  document.getElementById('depUser').textContent     = (d.realName||d.userId||'—')+' @'+(d.username||'—');
+  document.getElementById('depAmount').textContent   = '$'+Number(d.amount||0).toLocaleString();
+  document.getElementById('depCurrency').textContent = d.currency||'USD';
+  document.getElementById('depStatus').innerHTML     = depBadge(d.status);
+  document.getElementById('depNote').value           = '';
+
+  const rw = document.getElementById('receiptWrap');
+  if (d.receiptUrl) {
+    rw.innerHTML = `<img src="${esc(d.receiptUrl)}" alt="Receipt" onerror="this.parentElement.innerHTML='<div class=no-receipt>⚠️ Image load failed</div>'">`;
+  } else {
+    rw.innerHTML = '<div class="no-receipt">📄 No receipt uploaded</div>';
+  }
+
+  const actions = document.getElementById('depActions');
+  if (d.status!=='pending') {
+    actions.innerHTML = `<button class="btn-cancel" onclick="closeModal('depositModal')" style="flex:none;padding:11px 24px">Close</button>`;
+  } else {
+    actions.innerHTML = `
+      <button class="btn-cancel" onclick="closeModal('depositModal')">Close</button>
+      <button class="btn-confirm-red"   onclick="processDeposit('rejected')">❌ &nbsp;Reject</button>
+      <button class="btn-confirm-green" onclick="processDeposit('confirmed')">✅ &nbsp;Confirm & Credit</button>`;
+  }
+  document.getElementById('depositModal').style.display='flex';
+}
+
+async function processDeposit(action) {
+  if (!activeDepId) return;
+  const d = allDeposits.find(x=>x.id===activeDepId); if (!d) return;
+  const note = document.getElementById('depNote').value.trim();
+  try {
+    const batch = db.batch();
+    // Update deposit
+    batch.update(db.collection('deposits').doc(activeDepId), {
+      status: action,
+      adminNote: note,
+      processedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      processedBy: auth.currentUser?.email,
+    });
+    // If confirmed, credit balance
+    if (action==='confirmed' && d.userId) {
+      batch.update(db.collection('users').doc(d.userId), {
+        'balance.usd': firebase.firestore.FieldValue.increment(Number(d.amount||0)),
+        lastDepositAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+    // Update local state
+    const idx = allDeposits.findIndex(x=>x.id===activeDepId);
+    if (idx!==-1) allDeposits[idx].status=action;
+    if (action==='confirmed' && d.userId) {
+      const u = allUsers.find(x=>x.uid===d.userId);
+      if (u) { u.balance = u.balance || {}; u.balance.usd = (u.balance.usd||0)+Number(d.amount||0); }
+    }
+    closeModal('depositModal');
+    renderDeposits(); renderWallets(); updateDepBadge();
+    toast(action==='confirmed' ? `Deposit confirmed! $${Number(d.amount||0).toLocaleString()} credited ✅` : 'Deposit rejected ❌', action==='confirmed'?'ok':'info');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+}
+
+async function quickDepReject(id) {
+  activeDepId = id;
+  await processDeposit('rejected');
+}
+
+// ========== WITHDRAWALS ==========
+function renderWithdrawals() {
+  const pending   = allWths.filter(w=>w.status==='pending').length;
+  const confirmed = allWths.filter(w=>w.status==='confirmed').length;
+  const rejected  = allWths.filter(w=>w.status==='rejected').length;
+  document.getElementById('wth-pending').textContent   = pending;
+  document.getElementById('wth-confirmed').textContent = confirmed;
+  document.getElementById('wth-rejected').textContent  = rejected;
+
+  let list = wthFilter==='all' ? allWths : allWths.filter(w=>w.status===wthFilter);
+  const tb = document.getElementById('withdrawalTableBody');
+  if (!list.length){ tb.innerHTML=`<tr><td colspan="6"><div class="empty-state"><div class="empty-ico">🏧</div><p>No withdrawal records.</p></div></td></tr>`; return; }
+  tb.innerHTML = list.map(w=>`<tr>
+    <td><div class="td-name">${esc(w.realName||w.userId||'—')}</div><div class="td-uid">@${esc(w.username||'—')}</div></td>
+    <td class="td-mono td-gold">$${Number(w.amount||0).toLocaleString()}</td>
+    <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(w.accountInfo||'—')}</td>
+    <td>${depBadge(w.status)}</td>
+    <td class="td-uid">${fmtDate(w.createdAt)}</td>
+    <td>
+      <div class="action-row">
+        <button class="act-btn act-view" onclick="openWthModal('${w.id}')">🔍 Detail</button>
+        ${w.status==='pending'?`<button class="act-btn act-approve" onclick="openWthModal('${w.id}')">✅ Confirm</button><button class="act-btn act-reject" onclick="quickWthReject('${w.id}')">❌ Reject</button>`:''}
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function setWthFilter(f,el) {
+  wthFilter=f;
+  document.querySelectorAll('[id^="wf-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderWithdrawals();
+}
+
+function openWthModal(id) {
+  const w=allWths.find(x=>x.id===id); if (!w) return;
+  activeWthId=id;
+  document.getElementById('wthModalSub').textContent = 'ID: '+id;
+  document.getElementById('wthUser').textContent     = (w.realName||w.userId||'—')+' @'+(w.username||'—');
+  document.getElementById('wthAmount').textContent   = '$'+Number(w.amount||0).toLocaleString();
+  document.getElementById('wthStatus').innerHTML     = depBadge(w.status);
+  document.getElementById('wthDate').textContent     = fmtDate(w.createdAt);
+  document.getElementById('wthAccInfo').textContent  = w.accountInfo||'—';
+  document.getElementById('wthNote').value           = '';
+  const actions=document.getElementById('wthActions');
+  if (w.status!=='pending') {
+    actions.innerHTML=`<button class="btn-cancel" onclick="closeModal('wthModal')" style="flex:none;padding:11px 24px">Close</button>`;
+  } else {
+    actions.innerHTML=`
+      <button class="btn-cancel" onclick="closeModal('wthModal')">Close</button>
+      <button class="btn-confirm-red"   onclick="processWithdrawal('rejected')">❌ &nbsp;Reject</button>
+      <button class="btn-confirm-green" onclick="processWithdrawal('confirmed')">✅ &nbsp;Confirm</button>`;
+  }
+  document.getElementById('wthModal').style.display='flex';
+}
+
+async function processWithdrawal(action) {
+  if (!activeWthId) return;
+  const w=allWths.find(x=>x.id===activeWthId); if (!w) return;
+  const note=document.getElementById('wthNote').value.trim();
+  try {
+    const batch=db.batch();
+    batch.update(db.collection('withdrawals').doc(activeWthId),{
+      status:action, adminNote:note,
+      processedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      processedBy:auth.currentUser?.email,
+    });
+    // If confirmed, deduct balance
+    if (action==='confirmed' && w.userId) {
+      batch.update(db.collection('users').doc(w.userId),{
+        'balance.usd':firebase.firestore.FieldValue.increment(-Number(w.amount||0)),
+      });
+    }
+    await batch.commit();
+    const idx=allWths.findIndex(x=>x.id===activeWthId);
+    if (idx!==-1) allWths[idx].status=action;
+    if (action==='confirmed' && w.userId) {
+      const u=allUsers.find(x=>x.uid===w.userId);
+      if (u){u.balance=u.balance||{};u.balance.usd=(u.balance.usd||0)-Number(w.amount||0);}
+    }
+    closeModal('wthModal');
+    renderWithdrawals(); renderWallets(); updateWthBadge();
+    toast(action==='confirmed'?'Withdrawal confirmed ✅':'Withdrawal rejected ❌',action==='confirmed'?'ok':'info');
+  } catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function quickWthReject(id){
+  activeWthId=id;
+  await processWithdrawal('rejected');
+}
+
+// ========== ANNOUNCEMENTS ==========
+async function loadAnnouncements() {
+  const container=document.getElementById('annList');
+  container.innerHTML='<div class="loading-row"><div class="spin"></div>Loading...</div>';
+  try {
+    const snap=await db.collection('announcements').orderBy('createdAt','desc').limit(20).get();
+    if (snap.empty){container.innerHTML='<div class="empty-state"><div class="empty-ico">📢</div><p>No announcements.</p></div>';return;}
+    const icons={info:'📢',alert:'⚠️',profit:'💰',maintenance:'🔧'};
+    container.innerHTML=snap.docs.map(d=>{
+      const a=d.data();
+      return `<div class="announce-card">
+        <div class="ann-hdr">
+          <div class="ann-title2">${icons[a.type]||'📢'} ${esc(a.title||'Untitled')}</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="ann-meta">${a.createdAt?fmtDate(a.createdAt):'—'}</div>
+            <button class="act-btn act-del" onclick="deleteAnn('${d.id}')">🗑️</button>
+          </div>
+        </div>
+        <div class="ann-body">${esc(a.body||'')}</div>
+      </div>`;
+    }).join('');
+  } catch(e){container.innerHTML=`<div class="empty-state"><div class="empty-ico">⚠️</div><p>${esc(e.message)}</p></div>`;}
+}
+
+async function postAnnouncement() {
+  const title=document.getElementById('annTitle').value.trim();
+  const type =document.getElementById('annType').value;
+  const body =document.getElementById('annBody').value.trim();
+  if (!title||!body){toast('Please fill title and message.','err');return;}
+  try {
+    await db.collection('announcements').add({title,type,body,createdAt:firebase.firestore.FieldValue.serverTimestamp(),author:auth.currentUser?.email});
+    document.getElementById('annTitle').value='';
+    document.getElementById('annBody').value='';
+    toast('Announcement published 📢','ok');
+    loadAnnouncements();
+  } catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function deleteAnn(id) {
+  try {
+    await db.collection('announcements').doc(id).delete();
+    toast('Deleted','info');
+    loadAnnouncements();
+  } catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ========== SETTINGS ==========
+async function saveSettings() {
+  const user=auth.currentUser; if (!user) return;
+  const name=document.getElementById('settName').value.trim();
+  const oldP=document.getElementById('settOldPass').value;
+  const newP=document.getElementById('settNewPass').value;
+  try {
+    if (name) { await user.updateProfile({displayName:name}); document.getElementById('adminName').textContent=name; }
+    if (newP&&oldP) {
+      const cred=firebase.auth.EmailAuthProvider.credential(user.email,oldP);
+      await user.reauthenticateWithCredential(cred);
+      await user.updatePassword(newP);
+      document.getElementById('settOldPass').value='';
+      document.getElementById('settNewPass').value='';
+    }
+    toast('Settings saved ✅','ok');
+  } catch(e){
+    const msgs={'auth/wrong-password':'❌ Current password incorrect.','auth/weak-password':'⚠️ Password too weak.'};
+    toast(msgs[e.code]||'❌ '+e.message,'err');
+  }
+}
+
+// ========== HELPERS ==========
+function closeModal(id){document.getElementById(id).style.display='none';}
+
+function statusBadge(s){
+  const m={pending:['badge badge-pending','⏳ Pending'],active:['badge badge-active','✅ Active'],rejected:['badge badge-rejected','❌ Rejected'],suspended:['badge badge-suspended','🚫 Suspended']};
+  const [c,l]=m[s]||['badge','—'];
+  return `<span class="${c}"><span class="badge-dot"></span>${l}</span>`;
+}
+function depBadge(s){
+  const m={pending:['badge badge-pending','⏳ Pending'],confirmed:['badge badge-confirmed','✅ Confirmed'],rejected:['badge badge-rejected','❌ Rejected']};
+  const [c,l]=m[s]||['badge','—'];
+  return `<span class="${c}"><span class="badge-dot"></span>${l}</span>`;
+}
+function levelBadge(l){
+  const m={standard:['badge lv-standard','Standard'],vip:['badge lv-vip','⭐ VIP'],premium:['badge lv-premium','💎 Premium']};
+  const [c,lb]=m[l]||['badge lv-standard','Standard'];
+  return `<span class="${c}">${lb}</span>`;
+}
+function fmtDate(ts){
+  if (!ts) return '—';
+  try {
+    const d=ts.toDate?ts.toDate():new Date(ts);
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  } catch{return '—';}
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// ========== TOAST ==========
+function toast(msg,type='ok'){
+  const el=document.createElement('div');
+  el.className=`toast toast-${type}`;
+  const ico={ok:'✅',err:'❌',info:'ℹ️'};
+  el.innerHTML=`<span>${ico[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+// ========== CLOCK ==========
+function startClock(){
+  const el=document.getElementById('liveTime');
+  function tick(){const n=new Date();el.textContent=n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+  tick();setInterval(tick,1000);
+}
+</script>
+</body>
+</html>
