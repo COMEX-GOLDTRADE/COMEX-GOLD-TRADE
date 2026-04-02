@@ -9,6 +9,37 @@
 <title>COMEX GOLD TRADE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    .admin-msg { 
+        background: #e9e9eb; 
+        padding: 8px 15px; 
+        margin: 5px; 
+        border-radius: 15px; 
+        max-width: 80%;
+        float: left; 
+        clear: both; 
+        color: #000; 
+    }
+    .user-msg { 
+        background: #fbc02d; 
+        padding: 8px 15px; 
+        margin: 5px; 
+        border-radius: 15px; 
+        max-width: 80%;
+        float: right; 
+        clear: both; 
+        color: #000; 
+    }
+    #chat-container { 
+        display: flex; 
+        flex-direction: column; 
+        padding: 10px; 
+        overflow-y: auto; 
+        height: 400px; 
+        background: #fff;
+    }
+</style>
+
 <!-- Firebase v10 compat -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -171,9 +202,17 @@ body.light .form-input{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.12);}
 .ps-ico{width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 3px 10px rgba(212,175,55,.4));flex-shrink:0;}
 
 /* TradingView */
-.tv-wrap{
-  margin:12px 16px 0;border-radius:16px;overflow:hidden;
-  border:1px solid var(--border);background:#131722;height:250px;position:relative;
+  .tv-wrap {
+    margin: 20px 0 0;        /* ဘေး margin ကို 0 ပေးလိုက်ပါ (ဘေးအပြည့်ပေါ်ရန်) */
+    border-radius: 16px; 
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #131722;
+   height: 600px !important;  /* 900 အစား 600 လို့ အရင်စမ်းပါ၊ !important သေချာထည့်ပါ */
+min-height: 600px !important;
+
+    position: relative;
+    width: 100%;             /* width: 100% ကိုလည်း သေချာထည့်ပေးပါ */
 }
 .tv-loading{
   position:absolute;inset:0;display:flex;flex-direction:column;
@@ -1155,12 +1194,16 @@ input[type=file]{display:none;}
       </div>
 
       <!-- TradingView Trade -->
-      <div class="tv-wrap" id="tv-trade-wrap" style="margin:10px 16px 0;height:230px">
+      <!-- ဘေးအပြည့်နဲ့ အမြင့် 450px လိုချင်ရင် -->
+<div class="tv-wrap" id="tv-trade-wrap" style="margin:10px 0 0;height: 450px">
+
         <div class="tv-loading" id="tv-trade-loading">
           <div class="spinner"></div>
           <p>Loading Chart...</p>
         </div>
-        <div id="tv_trade"></div>
+       <!-- Line 1173 ကို ဒီလို ပြင်လိုက်ပါ -->
+<div id="tv_trade" style="height: 100%; width: 100%;"></div>
+
       </div>
 
       <!-- Timer options -->
@@ -1344,60 +1387,69 @@ input[type=file]{display:none;}
         <div class="ph-level">⭐ Standard Member</div>
       </div>
 
-      <!-- Account settings -->
-      <div class="pm-sec">
-        <div class="pm-sec-title">Account</div>
-        <div class="pm-item">
-          <div class="pm-l"><div class="pm-ico" style="background:rgba(212,175,55,.1)">📊</div><div><div class="pm-name">Account Level</div><div class="pm-sub">Standard · Upgrade Available</div></div></div>
-          <div class="pm-arr">›</div>
-        </div>
-        <div class="pm-item">
-          <div class="pm-l"><div class="pm-ico" style="background:rgba(52,152,219,.1)">🪪</div><div><div class="pm-name">KYC Verification</div><div class="pm-sub">Verify identity</div></div></div>
-          <div class="pm-arr">›</div>
-        </div>
-        <div class="pm-item">
-          <div class="pm-l"><div class="pm-ico" style="background:rgba(46,204,113,.1)">📱</div><div><div class="pm-name">Change Phone Number</div></div></div>
-          <div class="pm-arr">›</div>
-        </div>
-        <div class="pm-item">
-          <div class="pm-l"><div class="pm-ico" style="background:rgba(149,128,255,.1)">🔒</div><div><div class="pm-name">Change Password</div></div></div>
-          <div class="pm-arr">›</div>
-        </div>
-        <div class="pm-item" style="border:1px solid rgba(212,175,55,.25)">
-          <div class="pm-l"><div class="pm-ico" style="background:rgba(212,175,55,.12)">👑</div><div><div class="pm-name" style="color:var(--gold2)">VIP Plan &amp; Features</div><div class="pm-sub">Unlock advanced trading</div></div></div>
-          <div class="pm-arr" style="color:var(--gold2)">›</div>
-        </div>
-      </div>
+<!-- Account settings -->
+  <div class="pm-sec">
+    <div class="pm-sec-title">Account</div>
+    <div class="pm-item">
+      <div class="pm-l"><div class="pm-ico" style="background:rgba(212,175,55,.1)">📊</div><div><div class="pm-name">Account Level</div><div class="pm-sub">Standard · Upgrade Available</div></div></div>
+      <div class="pm-arr">›</div>
+    </div>
+    <div class="pm-item">
+      <div class="pm-l"><div class="pm-ico" style="background:rgba(52,152,219,.1)">🪪</div><div><div class="pm-name">KYC Verification</div><div class="pm-sub">Verify identity</div></div></div>
+      <div class="pm-arr">›</div>
+    </div>
+    <div class="pm-item">
+      <div class="pm-l"><div class="pm-ico" style="background:rgba(46,204,113,.1)">📱</div><div><div class="pm-name">Change Phone Number</div></div></div>
+      <div class="pm-arr">›</div>
+    </div>
+    <div class="pm-item">
+      <div class="pm-l"><div class="pm-ico" style="background:rgba(149,128,255,.1)">🔒</div><div><div class="pm-name">Change Password</div></div></div>
+      <div class="pm-arr">›</div>
+    </div>
+    <div class="pm-item" style="border:1px solid rgba(212,175,55,.25)">
+      <div class="pm-l"><div class="pm-ico" style="background:rgba(212,175,55,.12)">👑</div><div><div class="pm-name" style="color:var(--gold2)">VIP Plan &amp; Features</div><div class="pm-sub">Unlock advanced trading</div></div></div>
+      <div class="pm-arr" style="color:var(--gold2)">›</div>
+    </div>
+  </div>
 
-      <div class="pm-sec">
-        <div class="pm-sec-title">Preferences</div>
-        <div class="pm-item" onclick="openLang()">
-          <div class="pm-l">
-            <div class="pm-ico" style="background:rgba(0,200,200,.1)"><img id="pmLangIco" src="" alt="Lang"></div>
-            <div><div class="pm-name">Language</div><div class="pm-sub" id="pmLangSub">🇲🇲 Myanmar</div></div>
-          </div>
-          <div class="pm-arr">›</div>
-        </div>
-        <div class="pm-item">
-          <div class="pm-l">
-            <div class="pm-ico" style="background:rgba(100,120,220,.1)"><img id="pmThemeIco" src="" alt="Theme"></div>
-            <div class="pm-name">Dark Mode</div>
-          </div>
-          <div class="pm-toggle on" id="themeToggle" onclick="toggleTheme()"><div class="pm-thumb"></div></div>
-        </div>
+  <div class="pm-sec">
+    <div class="pm-sec-title">Preferences</div>
+    <div class="pm-item" onclick="openLang()">
+      <div class="pm-l">
+        <div class="pm-ico" style="background:rgba(0,200,200,.1)"><img id="pmLangIco" src="" alt="Lang"></div>
+        <div><div class="pm-name">Language</div><div class="pm-sub" id="pmLangSub">🇲🇲 Myanmar</div></div>
       </div>
+      <div class="pm-arr">›</div>
+    </div>
+    <div class="pm-item">
+      <div class="pm-l">
+        <div class="pm-ico" style="background:rgba(100,120,220,.1)"><img id="pmThemeIco" src="" alt="Theme"></div>
+        <div class="pm-name">Dark Mode</div>
+      </div>
+      <div class="pm-toggle on" id="themeToggle" onclick="toggleTheme()"><div class="pm-thumb"></div></div>
+    </div>
+  </div>
 
-      <div class="pm-sec">
-        <div class="pm-sec-title">Support</div>
-        <div class="pm-item" onclick="openChat()">
-          <div class="pm-l"><div class="pm-ico" style="background:rgba(52,152,219,.1)"><img id="pmCSIco" src="" alt="CS"></div><div class="pm-name">Customer Service</div></div>
-          <div class="pm-arr">›</div>
-        </div>
-        <div class="pm-item" onclick="doSignOut()">
-          <div class="pm-l"><div class="pm-ico" style="background:rgba(231,76,60,.1)">🚪</div><div class="pm-name" style="color:#ff4757">Sign Out</div></div>
-          <div class="pm-arr" style="color:#ff4757">›</div>
-        </div>
-      </div>
+  <div class="pm-sec">
+    <div class="pm-sec-title">Support</div>
+    <div class="pm-item" onclick="openChat()">
+      <div class="pm-l"><div class="pm-ico" style="background:rgba(52,152,219,.1)"><img id="pmCSIco" src="" alt="CS"></div><div class="pm-name">Customer Service</div></div>
+      <div class="pm-arr">›</div>
+    </div>
+<div class="pm-item" onclick="showAbout()">
+
+    <div class="pm-l">
+        <div class="pm-ico" style="background:rgba(52, 152, 219, 1)">ℹ️</div>
+        <div class="pm-name">About App</div>
+    </div>
+    <div class="pm-arr"></div>
+</div>
+
+    <div class="pm-item" onclick="doSignOut()">
+      <div class="pm-l"><div class="pm-ico" style="background:rgba(231,76,60,.1)">🚪</div><div class="pm-name" style="color:#ff4757">Sign Out</div></div>
+      <div class="pm-arr" style="color:#ff4757">›</div>
+    </div>
+  </div>
 
       <!-- About -->
       <div class="about-box">
@@ -1730,7 +1782,11 @@ function initCharts() {
       if (typeof TradingView !== 'undefined') {
         new TradingView.widget({
           container_id: 'tv_home',
-          autosize: true,
+          
+autosize: false,       // ဒါကို false ပြောင်းပေးပါ (အရေးကြီးသည်)
+width: "100%",
+height: 800,           // "100%" မဟုတ်ဘဲ 800 လို့ ဂဏန်းအသေ ရိုက်ထည့်ပါ
+
           symbol: 'OANDA:XAUUSD',
           interval: '5',
           timezone: 'Asia/Yangon',
@@ -2012,6 +2068,80 @@ function closeTradeModal() {
         </button>
     </div>
 </div>
+</script>
+<!-- Trade Result Popup Modal -->
+<div id="tradeResultModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center;">
+    
+    <div style="background: #252525; width: 85%; max-width: 350px; padding: 25px; border-radius: 15px; 
+                border: 1px solid #FFD700; text-align: center; box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);">
+        
+        <h2 style="color: #FFD700; margin-bottom: 20px;">SUCCESS!</h2>
+        
+        <!-- Result Details -->
+        <div style="text-align: left; color: #ddd; line-height: 1.8; font-size: 14px;">
+            <p>Trader: <span id="resUser" style="float: right; color: white; font-weight: bold;">...</span></p>
+            <p>Time: <span id="resTime" style="float: right; color: white;">...</span></p>
+            <p>Amount: <span id="resAmount" style="float: right; color: white;">...</span></p>
+            <p>Profit: <span id="resProfit" style="float: right; color: #00ff00;">...</span></p>
+            <hr style="border-color: #444; margin: 10px 0;">
+            <p style="font-size: 16px; font-weight: bold;">Total: <span id="resTotal" style="float: right; color: #FFD700;">...</span></p>
+        </div>
 
+        <button onclick="closeTradeModal()" 
+                style="margin-top: 20px; width: 100%; padding: 12px; background: #FFD700; color: black; 
+                       border: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+            Collect Money
+        </button>
+    </div>
+</div>
+
+<script>
+function showAbout() {
+    var aboutBox = document.querySelector('.about-box');
+    if (aboutBox) {
+        var content = aboutBox.innerHTML;
+        if (typeof layer !== "undefined") {
+            layer.open({
+                type: 1,
+                title: 'About App',
+                area: ['90%', '70%'],
+                content: '<div style="padding:20px; color:#333;">' + content + '</div>',
+                btn: ['Close']
+            });
+        } else {
+            // Layer library မရှိရင် အောက်ကအတိုင်း ရိုးရိုးပေါ်လာမှာပါ
+            alert("COMEX GOLD TRADE is Myanmar's trusted digital gold trading platform.");
+        }
+    } else {
+        alert("About content not found!");
+    }
+}
+</script>
+// ၁။ Firebase ကနေ စာအသစ်တက်လာတိုင်း နားထောင်ခြင်း (Live Listener)
+firebase.database().ref('chats').on('child_added', (snapshot) => {
+    const msg = snapshot.val();
+    
+    // စာသားတွေကို Screen ပေါ်မှာ ပေါ်အောင်လုပ်မယ့် function ကို ခေါ်ခြင်း
+    displayChatMessage(msg.text, msg.sender);
+});
+
+// ၂။ Screen ပေါ်မှာ စာသားတွေကို ပုံစံချပြီး ပြသမည့် function
+function displayChatMessage(text, sender) {
+    let chatHtml = "";
+    if (sender === 'admin') {
+        // Admin ဘက်ကစာဆိုရင် (ဘယ်ဘက်ခြမ်း design)
+        chatHtml = `<div class="admin-msg">${text}</div>`;
+    } else {
+        // User ဘက်ကစာဆိုရင် (ညာဘက်ခြမ်း design)
+        chatHtml = `<div class="user-msg">${text}</div>`;
+    }
+    
+    // Chat box ထဲကို စာသားအသစ် ထည့်သွင်းခြင်း
+    $("#chat-container").append(chatHtml);
+    
+    // စာအသစ်ရောက်တိုင်း အောက်ဆုံးကို အလိုအလျောက် ဆွဲချပေးခြင်း
+    $("#chat-container").scrollTop($("#chat-container")[0].scrollHeight);
+}
 </body>
 </html>
