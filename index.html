@@ -1720,16 +1720,18 @@ async function doRegister() {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
     const uid  = cred.user.uid;
     // Save to Firestore with pending status
-    await db.collection('users').doc(uid).set({
-      realName:  name,
-      username:  uname,
-      contact:   contact,
-      email:     email,
-      status:    'pending',  // Admin must approve
-      level:     'standard',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      balance:   { usd: 0, wg: 0, mmk: 0 },
-    });
+            await db.collection('users').doc(uid).set({
+            realName: name,
+            username: uname,
+            contact: contact,
+            email: email,
+            status: 'pending',
+            is_approved: false,
+            level: 'standard',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            balance: { usd: 0, wg: 0, mmk: 0 }
+        });
+
     // Show pending message
     document.getElementById('pendingBox').style.display = 'block';
     errEl.style.color = '#f0c040';
@@ -2143,5 +2145,23 @@ function displayChatMessage(text, sender) {
     // စာအသစ်ရောက်တိုင်း အောက်ဆုံးကို အလိုအလျောက် ဆွဲချပေးခြင်း
     $("#chat-container").scrollTop($("#chat-container")[0].scrollHeight);
 }
+</script>
+var currentUserId = "user_001"; 
+
+firebase.database().ref('users/' + currentUserId).on('value', (snapshot) => {
+    const isApproved = snapshot.val();
+
+    if (isApproved === "true" || isApproved === true) {
+        console.log("Access Granted");
+    } else {
+        document.body.innerHTML = `
+            <div style="text-align:center; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background:#1a1a1a; color:white; font-family:sans-serif; padding:20px;">
+                <h2 style="color:#f1c40f;">ခေတ္တစောင့်ဆိုင်းပေးပါ</h2>
+                <p>သင့်အကောင့်ကို Admin က အတည်ပြုပေးရန် စောင့်ဆိုင်းနေဆဲဖြစ်ပါသည်။</p>
+                <p style="font-size:14px; color:#aaa;">အတည်ပြုပြီးပါက ဤစာမျက်နှာ အလိုအလျောက် ပျောက်သွားပါမည်။</p>
+            </div>`;
+    }
+});
+</script>
 </body>
 </html>
